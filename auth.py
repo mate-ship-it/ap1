@@ -1,4 +1,4 @@
-from jose import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 from fastapi import HTTPException
 from datetime import timezone, timedelta, datetime
@@ -37,18 +37,18 @@ class AuthHandler():
         return token 
 
     def decode_access_token(self, token):
-        auth_token = token
-
         try:
-            decoded_token = jwt.decode(auth_token, self.secret, algorithms=[self.algorithm])
+            decoded_token = jwt.decode(token, self.secret, algorithms=[self.algorithm])
             sub = decoded_token["sub"]
             role = decoded_token["role"]
-            return sub, role 
+            return sub, role
 
         except jwt.ExpiredSignatureError:
-            print("Invalid Token")
             raise HTTPException(status_code=401, detail="Token expired")
 
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid token format")
+        
 import os
 from dotenv import load_dotenv
 
@@ -57,4 +57,3 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
 auth_handler = AuthHandler(SECRET_KEY, ALGORITHM)
-        
