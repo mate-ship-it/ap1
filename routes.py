@@ -9,12 +9,8 @@ from authorisation import allow_admissions_access, allow_patients_access
 from auth import auth_handler
 
 load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-if not SECRET_KEY or not isinstance(SECRET_KEY, str):
-    raise RuntimeError("SECRET_KEY is missing or invalid. Check your .env file.")
 
-auth_handler = AuthHandler(SECRET_KEY, ALGORITHM)
 controller = Controller()
 router = APIRouter()
 
