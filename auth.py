@@ -1,14 +1,15 @@
 from jose import jwt, JWTError
+from keymanager import KeyManager
 from passlib.context import CryptContext
 from fastapi import HTTPException
 from datetime import timezone, timedelta, datetime
 from typing import Optional
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+key_manager = KeyManager()
 
 class AuthHandler():
-    def __init__(self, SECRET_KEY, ALGORITHM):
-        self.secret = SECRET_KEY
+    def __init__(self, ALGORITHM):
         self.algorithm = ALGORITHM
 
     def get_password_hash(self, password):
@@ -33,22 +34,26 @@ class AuthHandler():
             to_encode["exp"] = datetime.now(timezone.utc) +  timedelta(minutes=30)
             to_encode["exp"]
             
-        token = jwt.encode(to_encode,self.secret, self.algorithm)
+        token = jwt.encode(to_encode, key_manager.get_active_key(), self.algorithm)
         return token 
 
     def decode_access_token(self, token):
-        try:
-            decoded_token = jwt.decode(token, self.secret, algorithms=[self.algorithm])
-            sub = decoded_token["sub"]
-            role = decoded_token["role"]
-            return sub, role
+        valid_keys = key_manager.get_valid_keys()
 
-        except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=401, detail="Token expired")
+        for key in key_manager.get_valid_keys():
+            try:
+                decode_token = jwt.decode(token, key, algorithms=[self.algorithm])
+                sub = decode_token["sub"]
+                role = decode_token["role"]
+                return sub, role
+            
+            except jwt.ExpiredSignatureError:
+                raise HTTPException(status_code=401, detail="Token expired")
+            except JWTError:
+                pass
+                
+        raise HTTPException(status_code=401, detail="Invalid token format")
 
-        except JWTError:
-            raise HTTPException(status_code=401, detail="Invalid token format")
-        
 import os
 from dotenv import load_dotenv
 
@@ -56,4 +61,5 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 
-auth_handler = AuthHandler(SECRET_KEY, ALGORITHM)
+auth_handler = AuthHandler(ALGORITHM)
+        
