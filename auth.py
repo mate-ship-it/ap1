@@ -37,7 +37,7 @@ class AuthHandler():
         token = jwt.encode(to_encode, key_manager.get_active_key(), self.algorithm)
         return token 
 
-    def decode_access_token(self, token):
+    def decode_access_token(self, request: Request):
         auth_header = request.headers.get("authorization")
 
         if not auth_header or not auth_header.startswith("Bearer "):
