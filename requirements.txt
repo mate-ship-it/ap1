@@ -8,3 +8,4 @@ pandas
 psycopg2
 hypercorn==0.14.4
 python-multipart
+bcrypt==4.0.1
