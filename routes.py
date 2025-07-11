@@ -1,9 +1,9 @@
 import os 
 from dotenv import load_dotenv
 from controller import Controller
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from typing import List
-from model import AdmissionModel, PatientsModel, SignUp, SignIn
+from model import AdmissionModel, PatientsModel, SignUp, SignIn, PatientDocumentModel
 from auth import AuthHandler
 from authorisation import allow_admissions_access, allow_patients_access
 from auth import auth_handler
@@ -11,6 +11,7 @@ from auth import auth_handler
 load_dotenv()
 ALGORITHM = os.getenv("ALGORITHM")
 
+auth_handler = AuthHandler(ALGORITHM)
 controller = Controller()
 router = APIRouter()
 
@@ -27,7 +28,28 @@ def get_patients(field=None, value=None, user = Depends(allow_patients_access)):
         return controller.get_filtered("patients", field, value)
     else:
         return controller.get_all("patients")
+
+@router.post("/patients/{pat_id}/upload-doc")
+def upload_document(pat_id: int, file: UploadFile = File(...), user = Depends(allow_patients_access)):
+    upload_dir = "uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+
+    file_location = f"{upload_dir}/{file.filename}"
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+
+    with open(file_location, "wb") as buffer:
+        buffer.write(file.file.read())
     
+    controller.upload_patient_document(pat_id, file.filename, file_location)
+
+    return {"message": "File uploaded successfully", "filename": file.filename}
+
+@router.get("/patients/{pat_id}/documents", response_model=List[PatientDocumentModel])
+def list_documents(pat_id: int, user = Depends(allow_patients_access)):
+    documents = controller.get_documents_by_patient(pat_id)
+    return documents
+
 @router.post("/signup", response_model=dict)
 def signup(user:SignUp):
     if user.email.endswith("@fastapi.com"):
