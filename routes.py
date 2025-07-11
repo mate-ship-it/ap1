@@ -38,11 +38,10 @@ def upload_document(pat_id: int, file: UploadFile = File(...), user = Depends(al
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
 
-    with open(file_location, "wb") as buffer:
-        buffer.write(file.file.read())
-    
-    controller.upload_patient_document(pat_id, file.filename, file_location)
+    print(f"Received file: {file.filename} — skipping save on Railway")
 
+    controller.upload_patient_document(pat_id, file.filename, f"/uploads/{file.filename}")
+    # controller.upload_patient_document(pat_id, file.filename, file_location)
     return {"message": "File uploaded successfully", "filename": file.filename}
 
 @router.get("/patients/{pat_id}/documents", response_model=List[PatientDocumentModel])
