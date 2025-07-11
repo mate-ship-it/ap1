@@ -36,7 +36,12 @@ class SignIn(BaseModel):
     email: str
     password: str
     
-
+class PatientDocumentModel(BaseModel):
+    doc_id: int
+    pat_id: int
+    filename: str
+    filepath: str
+    upload_time: datetime
 
     
     
