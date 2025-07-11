@@ -1,7 +1,7 @@
 from jose import jwt, JWTError
 from keymanager import KeyManager
 from passlib.context import CryptContext
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from datetime import timezone, timedelta, datetime
 from typing import Optional
 
@@ -38,6 +38,13 @@ class AuthHandler():
         return token 
 
     def decode_access_token(self, token):
+        auth_header = request.headers.get("authorization")
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Authorization header missing or invalid")
+
+        token = auth_header.split(" ")[1]
+        
         valid_keys = key_manager.get_valid_keys()
 
         for key in key_manager.get_valid_keys():
