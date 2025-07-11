@@ -1,4 +1,3 @@
-from urllib import response as resp
 from database import Database
 
 database_service = Database()
@@ -25,6 +24,12 @@ class Controller:
             self.database.insert_user_to_db(email, hash_password, role)
         else:
             raise ValueError("Registered as User")
+        
+    def upload_patient_document(self,pat_id, filename, filepath):
+        return self.database.insert_patient_document(pat_id, filename, filepath)
+
+    def get_documents_by_patient(self, pat_id):
+        return self.database.get_documents_by_patient(pat_id).to_dict(orient="records")
 
     def get_user(self, email):
         return self.database.get_user_in_db(email)
@@ -44,4 +49,4 @@ class Controller:
 
         return df.to_dict(orient="records")
 
-        
+    
