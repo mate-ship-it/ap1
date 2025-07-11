@@ -16,6 +16,7 @@ class Database():
         self.admissions_data = pd.read_sql("SELECT * FROM admissions", db)
         self.patients_data = pd.read_sql("SELECT * FROM patients", db)
         self.user_data = pd.read_sql("SELECT * FROM users", db)
+        self.patient_documents_data = pd.read_sql("SELECT * FROM patient_documents", db)
 
     def insert_user_to_db(self, email, hashed_password, role):
         with db.begin() as conn:
@@ -34,5 +35,19 @@ class Database():
         result = pd.read_sql(query, db, params={"email":email})
         return result 
     
+    def insert_patient_document(self, pat_id, filename, filepath):
+        with db.begin() as conn:
+            query = text("""
+                INSERT INTO patient_documents (pat_id, filename, filepath)
+                VALUES (:pat_id, :filename, :filepath)
+                         """)
+            conn.execute(query, {
+                "pat_id": pat_id,
+                "filename": filename,
+                "filepath": filepath
+            })
 
-        
+    def get_documents_by_patient(self, pat_id):
+        query = text("SELECT * FROM patient_documents WHERE pat_id = :pat_id")
+        result = pd.read_sql(query, db, params={"pat_id": pat_id})
+        return result
