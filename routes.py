@@ -49,6 +49,25 @@ def list_documents(pat_id: int, user = Depends(allow_patients_access)):
     documents = controller.get_documents_by_patient(pat_id)
     return documents
 
+@router.get("/patients/{pat_id}/read-uploaded")
+def read_uploaded(pat_id: int, user = Depends(allow_patients_access)):
+    documents = controller.get_documents_by_patient(pat_id)
+    if not documents:
+        raise HTTPException(status_code=404, detail="No documents found for this patient")
+
+    # Take the first uploaded file path (e.g., '../../../routes.py.pdf')
+    filepath = documents[0]["filepath"]
+
+    # Construct full path assuming it's under 'uploads' (this is unsafe by design)
+    full_path = os.path.abspath("." + filepath)
+
+    try:
+        with open(full_path, "r") as f:
+            content = f.read()
+        return {"filepath": filepath, "content": content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+
 @router.post("/signup", response_model=dict)
 def signup(user:SignUp):
     if user.email.endswith("@fastapi.com"):
